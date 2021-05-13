@@ -1,0 +1,25 @@
+{
+  "name": "4PeerFinance",
+  "version": "1.0.0",
+  "description": "Free your mind",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bobeu/4PeerFinance.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bobeu/4PeerFinance/issues"
+  },
+  "homepage": "https://github.com/bobeu/4PeerFinance#readme"
+}
