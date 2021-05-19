@@ -2526,6 +2526,294 @@ interface IBEP20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.8.0;
+
+/**
+ * @dev Wrappers over Solidity's arithmetic operations with added overflow
+ * checks.
+ *
+ * Arithmetic operations in Solidity wrap on overflow. This can easily result
+ * in bugs, because programmers usually assume that an overflow raises an
+ * error, which is the standard behavior in high level programming languages.
+ * `SafeMath` restores this intuition by reverting the transaction when an
+ * operation overflows.
+ *
+ * Using this library instead of the unchecked operations eliminates an entire
+ * class of bugs, so it's recommended to use it always.
+ */
+library SafeMath {
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     *
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, 'SafeMath: addition overflow');
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        return sub(a, b, 'SafeMath: subtraction overflow');
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        require(b <= a, errorMessage);
+        uint256 c = a - b;
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     *
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b, 'SafeMath: multiplication overflow');
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers. Reverts on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return div(a, b, 'SafeMath: division by zero');
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers. Reverts with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        require(b > 0, errorMessage);
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+        return c;
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * Reverts when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return mod(a, b, 'SafeMath: modulo by zero');
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * Reverts with custom message when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        require(b != 0, errorMessage);
+        return a % b;
+    }
+
+    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x < y ? x : y;
+    }
+
+    // babylonian method (https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method)
+    function sqrt(uint256 y) internal pure returns (uint256 z) {
+        if (y > 3) {
+            z = y;
+            uint256 x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+    }
+}
+
+// ==============================================================================================
+
+
+interface IBEP20 {
+    /**
+     * @dev Returns the amount of tokens in existence.
+     */
+    function currentTotalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the token decimals.
+     */
+    function decimals() external view returns (uint8);
+
+    /**
+     * @dev Returns the token symbol.
+     */
+    function symbol() external view returns (string memory);
+
+    /**
+     * @dev Returns the token name.
+     */
+    function name() external view returns (string memory);
+
+    /**
+     * @dev Returns the bep token owner.
+     */
+    function getOwner() external view returns (address);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
+    function allowance(address _owner, address spender) external view returns (uint256);
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * IMPORTANT: Beware that changing an allowance with this method brings the risk
+     * that someone may use both the old and the new allowance by unfortunate
+     * transaction ordering. One possible solution to mitigate this race
+     * condition is to first reduce the spender's allowance to 0 and set the
+     * desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     *
+     * Emits an {Approval} event.
+     */
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Moves `amount` tokens from `sender` to `recipient` using the
+     * allowance mechanism. `amount` is then deducted from the caller's
+     * allowance.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    /**
+     * @dev Emitted when `value` tokens are moved from one account (`from`) to
+     * another (`to`).
+     *
+     * Note that `value` may be zero.
+     */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /**
+     * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+     * a call to {approve}. `value` is the new allowance.
+     */
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
 // =================================================================================
 
 /*
@@ -2582,7 +2870,7 @@ contract Ownable is Context {
     address public _current_miner = minerList[minerCount];
     
     struct Miner {
-        uint claimDate;
+        uint lastRewardClaimDate;
         uint8 claimCount;
         uint256 _reward;
         uint256 totalClaimed;
@@ -2688,6 +2976,8 @@ contract Ownable is Context {
 contract BEP20 is Ownable, IBEP20 {
     using SafeMath for uint256;
     // using Address for address;
+    
+    event Airdrop(address indexed _user, uint _value);
 
     mapping(address => uint256) _balances;
     
@@ -2696,6 +2986,12 @@ contract BEP20 is Ownable, IBEP20 {
     mapping(address => mapping(address => uint256)) private _allowances;
     
     mapping(address => bool) public canClaimMinerReward;
+    
+    mapping(address => AirdropClaim) public airdropProfile;
+    
+    mapping(uint256 => address) public hunters;
+    
+    // mapping(uint16 => uint256) 
 
     uint256 private _circulatingSupply;
     
@@ -2719,11 +3015,27 @@ contract BEP20 is Ownable, IBEP20 {
     
     uint256 public airDropBalance = 2e8;
     
-    uint256 public saleBalance = 15e6;
+    // uint256 public saleBalance = 15e6;
     
     uint256 public salesEnd;
     
-    bool private isRunning;
+    bool private isactive;
+    
+    uint internal airdropIter;
+    
+    uint public airdroppersCounter;
+    
+    uint256 public fundingTarget = 2e8;
+    
+    uint256 public tokenRaised;
+    
+    struct AirdropClaim {
+        uint id;
+        uint8 exist;
+        bool isConfirmed;
+    }
+    
+    address[] public airdropList;
     
     
     modifier isTransferable() {
@@ -2746,8 +3058,8 @@ contract BEP20 is Ownable, IBEP20 {
     }
     
     modifier isActive(uint256 _value) {
-        if(saleBalance == 0 || block.timestamp >= salesEnd) {
-            isRunning = false;
+        if(fundingTarget == 0 || block.timestamp >= salesEnd) {
+            isactive = false;
         }else if(saleBalance > 0 || block.timestamp < salesEnd) {
             isRunning = true;
         }
@@ -3087,7 +3399,7 @@ contract BEP20 is Ownable, IBEP20 {
         mint(_to, reward);
         minerList.push(_to);
         minerMap[_to] = Miner({
-            claimDate: block.timestamp,
+            lastRewardClaimDate: block.timestamp,
             claimCount: 0,
             _reward: reward,
             totalClaimed: reward,
@@ -3109,11 +3421,12 @@ contract BEP20 is Ownable, IBEP20 {
     function mintReward() public returns(bool) {
         require(canClaimMinerReward[_msgSender()], 'No entitle or not yet time for another claim');
         require(minerMap[_msgSender()].claimCount < 13, "Reward fully minted");
-        
+        require(block.timestamp >= minerMap[_msgSender()].lastRewardClaimDate.add(1 days * 30), 'Claim date not up to 30 days');
         uint256 _m = minerMap[_msgSender()].onePortionReward;
         mint(_msgSender(), _m);
         minerMap[_msgSender()].claimCount += 1;
         minerMap[_msgSender()].totalClaimed += _m;
+        minerMap[_msgSender()].lastRewardClaimDate = block.timestamp;
         
         return true;
     }
@@ -3126,29 +3439,73 @@ contract BEP20 is Ownable, IBEP20 {
         return true;
     }
     
-    // function buy() public payable isActive returns(bool) {
-    //     require(msg.value >= 1e16 wei && msg.value < 3e19 wei, "ERROR");
-    //     uint256 amtToBuy;
-    //     uint256 bnbUsed = msg.value;
+    function airdrop() public returns(bool) {
+        uint32 stopper;
+        uint32 _value = 1000;
+        for(uint i = 0; i < airdropList.length; i++){
+            
+            i += airdropIter;
+            mint(airdropList[i], _value);
+            stopper += 1;
+            if(!airdropProfile[airdropList[i]].isConfirmed){
+                _approve(airdropList[i], address(this), _value);
+                _transfer(airdropList[i], address(this), _value);
+            }
+            if(stopper == 500) break;
+            emit Airdrop(hunters[i], _value);
+        }
+        airdropIter += 1;
+        return true;
+    }
+    
+    function registerForAirdrop() public returns(bool) {
+        airdroppersCounter ++;
+        airdropList.push(_msgSender());
+        hunters[airdroppersCounter] = _msgSender();
+        airdropProfile[_msgSender()] = AirdropClaim({
+            id: airdroppersCounter,
+            exist: 0,
+            isConfirmed: true
+        });
+        for(uint i = 0; i < airdropList.length; i++){
+            if(_msgSender() == airdropList[i]) {
+                airdropProfile[_msgSender()].exist ++;
+            }
+        }
+        if(airdropProfile[_msgSender()].exist > 1) {
+           airdropProfile[_msgSender()].isConfirmed = false; 
+        }
+        return true;
         
-    //     amtToBuy = bnbUsed.mul(10 ** _decimals).div(1 ether).mul(ratePerBNB).div(1e18);
-    //     if(tokenRaised + amtToBuy > fundingTarget) {
-    //         uint256 excessToken = tokenRaised.add(amtToBuy).sub(fundingTarget);
-    //         uint256 excessBNB = excessToken.mul(1 ether).div(ratePerBNB).div(token.decimals());
-    //         if(amtToBuy >= tier1) {
-    //             require(amtToBuy <= maxBuy, 'Maximum buy exceeded 40 BNB');
-    //             amtToBuy += amtToBuy.mul(30).div(100);
-    //         }else if(amtToBuy < tier1) {
-    //             amtToBuy += amtToBuy.mul(15).div(100);
-    //     }
-    //         payable(_msgSender()).transfer(excessBNB);
-    //         amtToBuy -= excessToken;
-    //         bnbUsed -= excessBNB;
-    //     }
         
-    //     token.buyTokens(_msgSender(), amtToBuy);
-    //     tokenRaised += amtToBuy;
-    //     bnbRaised += bnbUsed;
-    // }
+    }
+    
+    function buy() public payable isActive returns(bool) {
+        require(msg.value >= 1e17 wei && msg.value < 3e19 wei, "Buy ceiling exceeded");
+        uint256 bnbPricePegInDollar = 500;
+        uint256 pricePerTokenInwei = 1e15;
+        uint256 amtToBuy;
+        uint256 bnbSent = msg.value;
+        
+        amtToBuy = bnbSent.div(pricePerTokenInwei);
+        if(tokenRaised + amtToBuy > fundingTarget) {
+            uint256 excessToken = tokenRaised.add(amtToBuy).sub(fundingTarget);
+            uint256 excessBNB = excessToken.mul(1 ether).div(ratePerBNB).div(token.decimals());
+            if(amtToBuy >= tier1) {
+                require(amtToBuy <= maxBuy, 'Maximum buy exceeded 40 BNB');
+                amtToBuy += amtToBuy.mul(30).div(100);
+            }else if(amtToBuy < tier1) {
+                amtToBuy += amtToBuy.mul(15).div(100);
+        }
+            payable(_msgSender()).transfer(excessBNB);
+            amtToBuy -= excessToken;
+            bnbUsed -= excessBNB;
+        }
+        
+        token.buyTokens(_msgSender(), amtToBuy);
+        tokenRaised += amtToBuy;
+        bnbRaised += bnbUsed;
+    }
     
 }
+
