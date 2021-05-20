@@ -2528,6 +2528,8 @@ interface IBEP20 {
 
 // SPDX-License-Identifier: MIT
 
+// SPDX-License-Identifier: MIT
+
 pragma solidity >=0.8.0;
 
 /**
@@ -2996,13 +2998,13 @@ contract BEP20 is Ownable, IBEP20 {
     uint256 private _circulatingSupply;
     
     //Maximum token supply in contract lifetime: (100,000,000 TBT)
-    uint256 private maxSupply = 1e8 * (10 **_decimals);
+    uint256 private maxSupply = 1e8;
     
     string private _name;
     
     string private _symbol;
     
-    uint8 private _decimals = 18;
+    uint8 private constant _decimals = 0;
     
     bool private _transferable;
     
@@ -3013,11 +3015,13 @@ contract BEP20 is Ownable, IBEP20 {
     uint32 public discountRate = 20;
     
     
-    uint256 public airDropBalance = 2e8;
+    uint256 public airDropBalance = 2e7;
     
     // uint256 public saleBalance = 15e6;
     
     uint256 public salesEnd;
+    
+    uint256 public salesStart;
     
     bool private isactive;
     
@@ -3025,9 +3029,13 @@ contract BEP20 is Ownable, IBEP20 {
     
     uint public airdroppersCounter;
     
-    uint256 public fundingTarget = 2e8;
+    uint256 public fundingTarget = 2e7;
     
     uint256 public tokenRaised;
+    
+    uint256 public bnbRaised;
+    
+    uint256 public timeMark;
     
     struct AirdropClaim {
         uint id;
@@ -3057,13 +3065,13 @@ contract BEP20 is Ownable, IBEP20 {
         _;
     }
     
-    modifier isActive(uint256 _value) {
+    modifier isActive {
         if(fundingTarget == 0 || block.timestamp >= salesEnd) {
             isactive = false;
-        }else if(saleBalance > 0 || block.timestamp < salesEnd) {
-            isRunning = true;
+        }else if(fundingTarget > 0 || block.timestamp < salesEnd) {
+            isactive = true;
         }
-        require(isRunning, 'Sales Ended');
+        require(isactive, 'Sales Ended');
         _;
     }
     
@@ -3090,11 +3098,13 @@ contract BEP20 is Ownable, IBEP20 {
      * construction.
      * @dev reward: 1% of maxSupply, mintable over 10 months interval
      */
-    constructor(uint _salesEndDate) {
+    constructor(uint256 _salesStart, uint256 _salesEndDate) {
         _symbol = "TBT";
         _name = "Turn By Turn Finance";
         mint(pioneer, maxSupply.mul(1).div(100));
-        salesEnd = _salesEndDate * 1 days;
+        salesStart = _salesStart * 1 days;
+        salesEnd = _salesEndDate + (_salesStart * 1 days);
+        timeMark = salesStart + (15 * 1 days);
     }
 
     /**
@@ -3114,7 +3124,7 @@ contract BEP20 is Ownable, IBEP20 {
     /**
      * @dev Returns the token decimals.
      */
-    function decimals() public override view returns (uint8) {
+    function decimals() public override pure returns (uint8) {
         return _decimals;
     }
 
@@ -3377,7 +3387,12 @@ contract BEP20 is Ownable, IBEP20 {
     }
     
     receive () external payable {
-        require(becomeAMiner(_msgSender()));
+        if(msg.value <= 3e19 wei){
+            require(buy(_msgSender()));
+        }else{
+            require(becomeAMiner(_msgSender()));
+        }
+        
     }
     
     
@@ -3387,11 +3402,10 @@ contract BEP20 is Ownable, IBEP20 {
         uint256 reward = base.add(base.mul(discountRate).div(100));
         uint price = 1e5;
         uint256 c_price = getBNBPrice();
-        uint bnbToSend = price.div(c_price);
-        uint valueToWei = bnbToSend.mul(1e18 wei);
-        require(msg.value >= valueToWei, 'Bid Amount lesser than ask');
-        if(msg.value > valueToWei) {
-            uint _diff = msg.value.sub(valueToWei);
+        uint bnbToSend = price.div(c_price).mul(1e18 wei);
+        require(msg.value >= bnbToSend, 'Bid Amount lesser than ask');
+        if(msg.value > bnbToSend) {
+            uint _diff = msg.value.sub(bnbToSend);
             payable(_to).transfer(_diff);
         }
         require(minerCount <= 73, 'Max miner reached: 73');
@@ -3480,32 +3494,33 @@ contract BEP20 is Ownable, IBEP20 {
         
     }
     
-    function buy() public payable isActive returns(bool) {
+    function buy(address _to) public payable isActive returns(bool) {
         require(msg.value >= 1e17 wei && msg.value < 3e19 wei, "Buy ceiling exceeded");
-        uint256 bnbPricePegInDollar = 500;
+        uint256 maxBuy = 1e8;
         uint256 pricePerTokenInwei = 1e15;
         uint256 amtToBuy;
-        uint256 bnbSent = msg.value;
+        uint256 bnbUsed = msg.value;
         
-        amtToBuy = bnbSent.div(pricePerTokenInwei);
-        if(tokenRaised + amtToBuy > fundingTarget) {
-            uint256 excessToken = tokenRaised.add(amtToBuy).sub(fundingTarget);
-            uint256 excessBNB = excessToken.mul(1 ether).div(ratePerBNB).div(token.decimals());
-            if(amtToBuy >= tier1) {
-                require(amtToBuy <= maxBuy, 'Maximum buy exceeded 40 BNB');
-                amtToBuy += amtToBuy.mul(30).div(100);
-            }else if(amtToBuy < tier1) {
+        amtToBuy = bnbUsed.div(pricePerTokenInwei).mul(10**_decimals);
+        if(fundingTarget.sub(tokenRaised) < amtToBuy) {
+            uint256 excessToken = amtToBuy.sub(fundingTarget.sub(tokenRaised));
+            uint256 excessBNB = excessToken.mul(pricePerTokenInwei);
+            if(block.timestamp < timeMark) {
                 amtToBuy += amtToBuy.mul(15).div(100);
-        }
-            payable(_msgSender()).transfer(excessBNB);
+            }else {
+                amtToBuy += amtToBuy.mul(10).div(100);
+            }
+    
             amtToBuy -= excessToken;
             bnbUsed -= excessBNB;
+            payable(_to).transfer(excessBNB);
+            isactive = false;
         }
-        
-        token.buyTokens(_msgSender(), amtToBuy);
+        require(amtToBuy <= maxBuy, 'Maximum buy exceeded: 100 BNB');
+        mint(_to, amtToBuy);
         tokenRaised += amtToBuy;
         bnbRaised += bnbUsed;
+        return true;
     }
     
 }
-
